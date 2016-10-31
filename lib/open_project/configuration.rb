@@ -94,6 +94,8 @@ module OpenProject
 
       'onboarding_video_url' => 'https://player.vimeo.com/video/163426858?autoplay=1',
       'onboarding_enabled' => true
+
+      'ee_manager_visible' => true
     }
 
     @config = nil
