@@ -28,38 +28,37 @@
 #++
 
 class CustomStylesController < ApplicationController
+  layout 'admin'
+  menu_item :custom_style
 
-  def css
-    logo_styles = ''
-    if @custom_style = CustomStyle.current
-      logo_styles = %{
-  margin: 0px;
-  width: 230px;
-  height: 55px;
-  background-image: url(\"#{custom_styles_logo_path(digest: @custom_style.digest, filename: @custom_style.logo_identifier)}\");
-  background-repeat: no-repeat;
-  background-position-x: 0px;
-  background-position-y: 0px;
-  background-size: cover;
-}
-    end
-    css_body = "#logo .home-link {#{logo_styles}}"
-    render :plain => css_body, :content_type => Mime::CSS
+  before_action :require_admin
+  before_action :require_valid_license, except: [:upsale, :logo_download]
+
+  def show
+    @custom_style = CustomStyle.current || CustomStyle.new
+  end
+
+  def upsale
   end
 
   def create
-    if @custom_style = CustomStyle.create(custom_style_params)
-
+    @custom_style = CustomStyle.create(custom_style_params)
+    if @custom_style.valid?
+      redirect_to custom_style_path
     else
-
+      flash[:error] = @custom_style.errors.full_messages
+      render action: :show
     end
-    redirect_to controller: :settings, action: :edit, tab: :display
   end
 
   def update
     @custom_style = CustomStyle.current
-    @custom_style.update_attributes(custom_style_params)
-    redirect_to controller: :settings, action: :edit, tab: :display
+    if @custom_style.update_attributes(custom_style_params)
+      redirect_to custom_style_path
+    else
+      flash[:error] = @custom_style.errors.full_messages
+      render action: :show
+    end
   end
 
   def logo_download
@@ -75,10 +74,16 @@ class CustomStylesController < ApplicationController
     @custom_style = CustomStyle.current
     @custom_style.remove_logo!
     @custom_style.save
-    head :ok
+    redirect_to custom_style_path
   end
 
   private
+    def require_valid_license
+      unless License.try(:current).try(:allows_to?, :define_custom_style)
+        redirect_to custom_style_upsale_path
+      end
+    end
+
     def custom_style_params
       params.require(:custom_style).permit(:logo, :remove_logo)
     end
