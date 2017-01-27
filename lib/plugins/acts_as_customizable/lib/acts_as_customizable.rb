@@ -78,14 +78,33 @@ module Redmine
 
         # Sets the values of the object's custom fields
         # values is a hash like {'1' => 'foo', 2 => 'bar'}
+        #
+        # Also supports multiple values for a custom field where
+        # instead of a single value you'd pass an array.
         def custom_field_values=(values)
+          return nil unless values.is_a? Hash
+
           @custom_field_values_changed = true
-          values = values.stringify_keys
-          custom_field_values.each do |custom_value|
-            if values.has_key?(custom_value.custom_field_id.to_s)
-              custom_value.value = values[custom_value.custom_field_id.to_s]
+          values = values.with_indifferent_access
+
+          values.each do |custom_field_id, val|
+            existing_custom_values = custom_field_values
+              .select { |cv| cv.custom_field_id == custom_field_id.to_i }
+            cvs = Array(val).zip(existing_custom_values)
+
+            unless existing_custom_values.empty?
+              cvs.each do |new_value, custom_value|
+                if custom_value.nil?
+                  new_custom_value = custom_values
+                    .build(customized: self, custom_field_id: custom_field_id, value: new_value)
+
+                  custom_field_values.push(new_custom_value)
+                else
+                  custom_value.value = new_value
+                end
+              end
             end
-          end if values.is_a?(Hash)
+          end
         end
 
         def custom_field_values
@@ -107,7 +126,13 @@ module Redmine
 
         def custom_value_for(c)
           field_id = (c.is_a?(CustomField) ? c.id : c.to_i)
-          custom_values.detect { |v| v.custom_field_id == field_id }
+          values = custom_values.select { |v| v.custom_field_id == field_id }
+
+          if values.size > 1
+            values.sort_by(&:id)
+          else
+            values.first
+          end
         end
 
         def save_custom_field_values
@@ -190,8 +215,15 @@ module Redmine
 
         def define_custom_field_getter(getter_name, custom_field)
           define_singleton_method getter_name do
-            custom_value = custom_value_for(custom_field)
-            custom_value ? custom_value.typed_value : nil
+            custom_values = Array(custom_value_for(custom_field)).map do |custom_value|
+              custom_value ? custom_value.typed_value : nil
+            end
+
+            if custom_field.multi_value?
+              custom_values
+            else
+              custom_values.first
+            end
           end
         end
 
@@ -200,7 +232,7 @@ module Redmine
             # N.B. we do no strict type checking here, it would be possible to assign a user
             # to an integer custom field...
             value = value.id if value.respond_to?(:id)
-            self.custom_field_values = { custom_field.id => value }
+            self.custom_field_values = { custom_field.id => Array(value) }
           end
         end
 

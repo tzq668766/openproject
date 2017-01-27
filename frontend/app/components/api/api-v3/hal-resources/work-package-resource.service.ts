@@ -316,6 +316,8 @@ export class WorkPackageResource extends HalResource {
 
         // Take over new values from the form
         // this resource doesn't know yet.
+        console.log("payload: ");
+        console.log(form.$embedded.payload); // foobar
         this.assignNewValues(form.$embedded.payload);
 
         deferred.resolve(form);
@@ -342,6 +344,10 @@ export class WorkPackageResource extends HalResource {
         // allowedValues set (type, status, custom field lists, etc.)
         const hasAllowedValues = Array.isArray(field.allowedValues) && field.allowedValues.length > 0;
 
+        console.log(
+          "load " + field + ", " + name +
+          " (isHal: " + isHalField + ", allowed values: " + hasAllowedValues + ")");
+
         if (isHalField && hasAllowedValues) {
           this[name] = _.find(field.allowedValues, {href: this[name].href}) || this[name];
         }
@@ -352,6 +358,7 @@ export class WorkPackageResource extends HalResource {
   }
 
   public save() {
+    console.log("saving work package resource");
     var deferred = $q.defer();
     this.inFlight = true;
     const wasNew = this.isNew;
@@ -421,8 +428,12 @@ export class WorkPackageResource extends HalResource {
   }
 
   private mergeWithForm(form) {
+    console.log("mergeWithForm");
+
     var plainPayload = form.payload.$plain();
     var schema = form.$embedded.schema;
+
+    console.log("payload before: " + JSON.stringify(plainPayload));
 
     // Merge embedded properties from form payload
     // Do not use properties on this, since they may be incomplete
@@ -436,10 +447,27 @@ export class WorkPackageResource extends HalResource {
     // Merged linked properties from form payload
     Object.keys(plainPayload._links).forEach(key => {
       if (typeof(schema[key]) === 'object' && schema[key].writable === true) {
-        var value = this[key] ? this[key].href : null;
-        plainPayload._links[key] = {href: value};
+        var isArray = (schema[key].type || '').startsWith('[]');
+
+        if (isArray) {
+          var links = [];
+          var elements = (this[key].forEach && this[key]) || this[key].elements;
+
+          elements.forEach(link => {
+            if (link.href) {
+              links.push({ href: link.href });
+            }
+          });
+
+          plainPayload._links[key] = links;
+        } else {
+          var value = this[key] ? this[key].href : null;
+          plainPayload._links[key] = {href: value};
+        }
       }
     });
+
+    console.log("payload after: " + JSON.stringify(plainPayload));
 
     return plainPayload;
   }
@@ -448,6 +476,9 @@ export class WorkPackageResource extends HalResource {
     Object.keys(formPayload.$source).forEach(key => {
       if (angular.isUndefined(this[key])) {
         this[key] = formPayload[key];
+        console.log("Assigning " + key + ": ");
+        console.log(formPayload[key]);
+        console.log("");
       }
     });
   }

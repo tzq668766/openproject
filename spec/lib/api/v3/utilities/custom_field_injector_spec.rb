@@ -158,14 +158,10 @@ describe ::API::V3::Utilities::CustomFieldInjector do
         allow(schema)
           .to receive(:assignable_custom_field_values)
           .with(custom_field)
-          .and_return(custom_field.possible_values)
+          .and_return(custom_field.possible_values.map { |co| [co.value, co.id] })
       end
 
-      let(:custom_field) {
-        FactoryGirl.build(:list_wp_custom_field,
-                          is_required: true,
-                          possible_values: values)
-      }
+      let(:custom_field) { FactoryGirl.create(:list_wp_custom_field, is_required: true, possible_values: values) }
       let(:values) { ['foo', 'bar', 'baz'] }
 
       it_behaves_like 'has basic schema properties' do
@@ -178,7 +174,7 @@ describe ::API::V3::Utilities::CustomFieldInjector do
 
       it_behaves_like 'links to and embeds allowed values directly' do
         let(:path) { cf_path }
-        let(:hrefs) { values.map { |value| api_v3_paths.string_object(value) } }
+        let(:hrefs) { custom_field.possible_values.map { |value| api_v3_paths.string_object([value.value, value.id]) } }
       end
     end
 
@@ -422,7 +418,7 @@ describe ::API::V3::Utilities::CustomFieldInjector do
 
       it 'accepts a valid link' do
         json = { cf_path => { href: (api_v3_paths.user 2) } }.to_json
-        expected = { custom_field.id => '2' }
+        expected = { custom_field.id => ['2'] }
 
         expect(represented).to receive(:custom_field_values=).with(expected)
         modified_class.new(represented, current_user: nil).from_json(json)
@@ -430,7 +426,7 @@ describe ::API::V3::Utilities::CustomFieldInjector do
 
       it 'accepts an empty link' do
         json = { cf_path => { href: nil } }.to_json
-        expected = { custom_field.id => nil }
+        expected = { custom_field.id => [] }
 
         expect(represented).to receive(:custom_field_values=).with(expected)
         modified_class.new(represented, current_user: nil).from_json(json)

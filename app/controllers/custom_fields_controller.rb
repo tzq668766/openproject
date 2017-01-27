@@ -102,7 +102,9 @@ class CustomFieldsController < ApplicationController
         klass = type.to_s.constantize
         klass.new(params) if klass.ancestors.include? CustomField
       end
-    rescue
+    rescue NameError => e
+      Rails.logger.error "#{e.message}:\n#{e.backtrace.join("\n")}"
+      nil
     end
     redirect_to custom_fields_path unless cf
     cf

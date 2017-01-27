@@ -42,8 +42,7 @@
         regexpField           = $('#custom_field_regexp'),
         possibleValues        = $('#custom_field_possible_values_attributes'),
         defaultValueFields    = $('#custom_field_default_value_attributes'),
-        spanDefaultTextMulti  = $('#default_value_text_multi'),
-        spanDefaultTextSingle = $('#default_value_text_single'),
+        spanDefaultText       = $('#default_value_text'),
         spanDefaultBool       = $('#default_value_bool');
 
     var deactivate = function(element) {
@@ -65,11 +64,11 @@
           unsearchable = function() { searchable.attr('checked', false).hide(); };
 
       // defaults (reset these fields before doing anything else)
-      $.each([spanDefaultBool, spanDefaultTextSingle], function(idx, element) {
+      $.each([spanDefaultBool, spanDefaultText], function(idx, element) {
         deactivate(element);
       });
       show(defaultValueFields);
-      activate(spanDefaultTextMulti);
+      activate(spanDefaultText);
 
       switch (format.val()) {
         case 'list':
@@ -79,22 +78,18 @@
           break;
         case 'bool':
           activate(spanDefaultBool);
-          deactivate(spanDefaultTextMulti);
+          deactivate(spanDefaultText);
           deactivate(possibleValues);
           hide(lengthField, regexpField, searchable);
           unsearchable();
           break;
         case 'date':
-          activate(spanDefaultTextSingle);
-          deactivate(spanDefaultTextMulti);
           deactivate(possibleValues);
           hide(lengthField, regexpField);
           unsearchable();
           break;
         case 'float':
         case 'int':
-          activate(spanDefaultTextSingle);
-          deactivate(spanDefaultTextMulti);
           deactivate(possibleValues);
           show(lengthField, regexpField);
           unsearchable();
