@@ -29,35 +29,36 @@ import {timelineElementCssClass, RenderInfo} from "./wp-timeline";
 import {WorkPackageCacheService} from "../../work-packages/work-package-cache.service";
 import {WorkPackageTimelineTableController} from "./wp-timeline-container.directive";
 import {TimelineCellRenderer} from "./cell-renderer/timeline-cell-renderer";
+import {WorkPackageResourceInterface} from "../../api/api-v3/hal-resources/work-package-resource.service";
 import IScope = angular.IScope;
-import Observable = Rx.Observable;
-import IDisposable = Rx.IDisposable;
 import Moment = moment.Moment;
+import {keyCodes} from "../../common/keyCodes.enum";
 
 const classNameBar = "bar";
-const classNameLeftHandle = "leftHandle";
-const classNameRightHandle = "rightHandle";
+export const classNameLeftHandle = "leftHandle";
+export const classNameRightHandle = "rightHandle";
 
 
 export function registerWorkPackageMouseHandler(this: void,
+                                                getRenderInfo: () => RenderInfo,
                                                 workPackageTimeline: WorkPackageTimelineTableController,
                                                 wpCacheService: WorkPackageCacheService,
-                                                bar: HTMLElement,
+                                                cell: HTMLElement,
+                                                bar: HTMLDivElement,
                                                 renderer: TimelineCellRenderer,
                                                 renderInfo: RenderInfo) {
 
   let startX: number = null; // also flag to signal active drag'n'drop
   let dateStates:any;
-  let jBody = jQuery("body");
+  let placeholderForEmptyCell: HTMLElement;
+  const jBody = jQuery("body");
+
+  // handle mouse move on cell
+  cell.onmousemove = handleMouseMoveOnEmptyCell;
 
   bar.onmousedown = (ev: MouseEvent) => {
-    mouseDownFn(ev);
+    workPackageMouseDownFn(ev);
   };
-
-  jBody.on("mouseup", () => {
-      deactivate(false);
-    }
-  );
 
   function applyDateValues(dates:{[name:string]: Moment}) {
     const wp = renderInfo.workPackage;
@@ -69,45 +70,107 @@ export function registerWorkPackageMouseHandler(this: void,
     wpCacheService.updateWorkPackage(wp);
   }
 
-  function mouseMoveFn(ev: JQueryEventObject) {
-    const mev: MouseEvent = ev as any;
-    const distance = Math.floor((mev.clientX - startX) / renderInfo.viewParams.pixelPerDay);
-    const days = distance < 0 ? distance + 1 : distance;
+  function createMouseMoveFn(direction: "left" | "right" | "both" | "create" | "dragright") {
+    return (ev: JQueryEventObject) => {
+      const mev: MouseEvent = ev as any;
+      const distance = Math.floor((mev.clientX - startX) / renderInfo.viewParams.pixelPerDay);
+      const days = distance < 0 ? distance + 1 : distance;
 
-    dateStates = renderer.onDaysMoved(renderInfo.workPackage, days);
+      const offsetDayCurrent = Math.floor(ev.offsetX / renderInfo.viewParams.pixelPerDay);
+      const dayUnderCursor = renderInfo.viewParams.dateDisplayStart.clone().add(offsetDayCurrent, "days");
 
-    applyDateValues(dateStates);
+      dateStates = renderer.onDaysMoved(renderInfo.workPackage, dayUnderCursor, days, direction);
+      applyDateValues(dateStates);
+    }
   }
 
   function keyPressFn(ev: JQueryEventObject) {
     const kev: KeyboardEvent = ev as any;
-    if (kev.keyCode === 27) { // ESC
+    if (kev.keyCode === keyCodes.ESCAPE) {
       deactivate(true);
     }
   }
 
-  function mouseDownFn(ev: MouseEvent) {
+  function workPackageMouseDownFn(ev: MouseEvent) {
     ev.preventDefault();
 
     workPackageTimeline.disableViewParamsCalculation = true;
     startX = ev.clientX;
 
     // Determine what attributes of the work package should be changed
-    renderer.onMouseDown(ev, renderInfo, bar);
+    const direction = renderer.onMouseDown(ev, null, renderInfo, bar);
 
-    jBody.on("mousemove", mouseMoveFn);
+    jBody.on("mousemove", createMouseMoveFn(direction));
     jBody.on("keyup", keyPressFn);
+    jBody.on("mouseup", () => deactivate(false));
+  }
+
+  function handleMouseMoveOnEmptyCell(ev: MouseEvent) {
+    const renderInfo = getRenderInfo();
+    const wp = renderInfo.workPackage;
+
+    if (!renderer.isEmpty(wp)) {
+      return;
+    }
+
+    // placeholder logic
+    placeholderForEmptyCell && placeholderForEmptyCell.remove();
+    placeholderForEmptyCell = renderer.displayPlaceholderUnderCursor(ev, renderInfo);
+    cell.appendChild(placeholderForEmptyCell);
+
+    // abort if mouse leaves cell
+    cell.onmouseleave = () => {
+      placeholderForEmptyCell.remove();
+    };
+
+    // create logic
+    cell.onmousedown = (ev) => {
+      placeholderForEmptyCell.remove();
+      bar.style.pointerEvents = "none";
+      ev.preventDefault();
+
+      const offsetDayStart = Math.floor(ev.offsetX / renderInfo.viewParams.pixelPerDay);
+      const clickStart = renderInfo.viewParams.dateDisplayStart.clone().add(offsetDayStart, "days");
+      const dateForCreate = clickStart.format("YYYY-MM-DD");
+      const mouseDownType = renderer.onMouseDown(ev, dateForCreate, renderInfo, bar);
+      renderer.update(cell, bar, renderInfo);
+
+      if (mouseDownType === "create") {
+        deactivate(false);
+        ev.preventDefault();
+        return;
+      }
+
+      cell.onmousemove = (ev) => {
+        const offsetDayCurrent = Math.floor(ev.offsetX / renderInfo.viewParams.pixelPerDay);
+        const dayUnderCursor = renderInfo.viewParams.dateDisplayStart.clone().add(offsetDayCurrent, "days");
+        const widthInDays = offsetDayCurrent - offsetDayStart;
+        const moved = renderer.onDaysMoved(wp, dayUnderCursor, widthInDays, mouseDownType);
+        renderer.assignDateValues(wp, moved);
+        renderer.update(cell, bar, renderInfo);
+      };
+
+      cell.onmouseleave = () => {
+        deactivate(true);
+      };
+
+      cell.onmouseup = () => {
+        deactivate(false);
+      };
+
+      jBody.on("keyup", keyPressFn);
+    };
   }
 
   function deactivate(cancelled: boolean) {
     workPackageTimeline.disableViewParamsCalculation = false;
 
-    if (startX == null) {
-      return;
-    }
-
-    jBody.off("mousemove", mouseMoveFn);
-    jBody.off("keyup", keyPressFn);
+    cell.onmousemove = handleMouseMoveOnEmptyCell;
+    cell.onmouseup = null;
+    bar.style.pointerEvents = "auto";
+    jBody.off("mouseup");
+    jBody.off("mousemove");
+    jBody.off("keyup");
     jQuery(".hascontextmenu").css("cursor", "context-menu");
     jQuery("." + timelineElementCssClass).css("cursor", '');
     jQuery("." + classNameLeftHandle).css("cursor", "w-resize");
@@ -123,10 +186,14 @@ export function registerWorkPackageMouseHandler(this: void,
     }
 
     // Persist the changes
-    wpCacheService.saveIfChanged(renderInfo.workPackage)
+    saveWorkPackage(renderInfo.workPackage);
+  }
+
+  function saveWorkPackage(workPackage: WorkPackageResourceInterface) {
+    wpCacheService.saveIfChanged(workPackage)
       .catch(() => {
         // Reset the changes on error
-        renderer.onCancel(renderInfo.workPackage);
+        renderer.onCancel(workPackage);
       })
       .finally(() => {
         workPackageTimeline.refreshView();

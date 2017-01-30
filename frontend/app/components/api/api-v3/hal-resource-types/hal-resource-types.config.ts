@@ -37,8 +37,8 @@ function halResourceTypesConfig(halResourceTypes:HalResourceTypesService) {
         parent: 'WorkPackage',
         children: 'WorkPackage',
         relations: 'Relation',
-        type: 'Type',
-        schema: 'Schema'
+        schema: 'Schema',
+        type: 'Type'
       }
     },
     Activity: {

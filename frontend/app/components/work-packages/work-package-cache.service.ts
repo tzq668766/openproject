@@ -83,6 +83,7 @@ export class WorkPackageCacheService {
   }
 
   saveIfChanged(workPackage) {
+
     if (!(workPackage.dirty || workPackage.isNew)) {
       return this.$q.when(workPackage);
     }
