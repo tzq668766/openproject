@@ -1,13 +1,13 @@
 #-- encoding: UTF-8
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2006-2017 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -158,6 +158,11 @@ OpenProject::Application.routes.draw do
       post 'update_work_package_done_ratio'
     end
   end
+
+  get 'custom_style/:digest/logo/:filename' => 'custom_styles#logo_download',
+      as: 'custom_style_logo',
+      constraints: { filename: /[^\/]*/ }
+
   resources :custom_fields, except: :show
   get '(projects/:project_id)/search' => 'search#index', as: 'search'
 
@@ -373,7 +378,12 @@ OpenProject::Application.routes.draw do
 
   scope 'admin' do
     resource :announcements, only: [:edit, :update]
+    resource :enterprise, only: [:show, :create, :destroy]
     resources :enumerations
+
+    delete 'design/logo' => 'custom_styles#logo_delete', as: 'custom_style_logo_delete'
+    get 'design/upsale' => 'custom_styles#upsale', as: 'custom_style_upsale'
+    resource :custom_style, only: [:update, :show, :create], path: 'design'
 
     resources :groups do
       member do

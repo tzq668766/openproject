@@ -1,12 +1,12 @@
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2006-2017 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ describe 'API v3 Work package resource', type: :request do
   end
   let(:watcher) do
     FactoryGirl
-      .create(:user,  member_in_project: project, member_through_role: role)
+      .create(:user, member_in_project: project, member_through_role: role)
       .tap do |user|
         work_package.add_watcher(user)
       end
@@ -88,18 +88,18 @@ describe 'API v3 Work package resource', type: :request do
       expect(subject.body).to be_json_eql(1.to_json).at_path('total')
     end
 
+    it 'embedds the work package schemas' do
+      FactoryGirl.create(:work_package, project: project)
+
+      expect(subject.body)
+        .to be_json_eql(api_v3_paths.work_package_schema(project.id, work_package.type.id).to_json)
+        .at_path('_embedded/schemas/_embedded/elements/0/_links/self/href')
+    end
+
     context 'user not seeing any work packages' do
+      include_context 'with non-member permissions from non_member_permissions'
       let(:current_user) { FactoryGirl.create(:user) }
       let(:non_member_permissions) { [:view_work_packages] }
-
-      around do |example|
-        non_member = Role.non_member
-        previous_permissions = non_member.permissions
-
-        non_member.update_attribute(:permissions, non_member_permissions)
-        example.run
-        non_member.update_attribute(:permissions, previous_permissions)
-      end
 
       it 'succeeds' do
         expect(subject.status).to eql 200

@@ -1,13 +1,13 @@
 #-- encoding: UTF-8
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2006-2017 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -93,7 +93,9 @@ module OpenProject
       'apiv2_enable_basic_auth' => true,
 
       'onboarding_video_url' => 'https://player.vimeo.com/video/163426858?autoplay=1',
-      'onboarding_enabled' => true
+      'onboarding_enabled' => true,
+
+      'ee_manager_visible' => true
     }
 
     @config = nil

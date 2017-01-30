@@ -1,13 +1,13 @@
 #-- encoding: UTF-8
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2006-2017 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -127,8 +127,12 @@ module API
             "#{projects}/#{id}"
           end
 
+          def self.queries
+            "#{root}/queries"
+          end
+
           def self.query(id)
-            "#{root}/queries/#{id}"
+            "#{queries}/#{id}"
           end
 
           def self.query_star(id)
@@ -255,6 +259,21 @@ module API
 
           def self.work_package_schema(project_id, type_id)
             "#{root}/work_packages/schemas/#{project_id}-#{type_id}"
+          end
+
+          def self.work_package_schemas(*args)
+            path = "#{root}/work_packages/schemas"
+            if args.empty?
+              path
+            else
+              values = args.map do |project_id, type_id|
+                "#{project_id}-#{type_id}"
+              end
+
+              filter = [{ id: { operator: '=', values: values } }]
+
+              path + "?filters=#{CGI.escape(filter.to_s)}"
+            end
           end
 
           def self.work_package_sums_schema

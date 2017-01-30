@@ -1,13 +1,13 @@
 #-- encoding: UTF-8
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2006-2017 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -122,11 +122,10 @@ module QueriesHelper
 
   def visible_queries
     unless @visible_queries
-      # User can see public queries and his own queries
-      visible = ARCondition.new(['is_public = ? OR user_id = ?', true, (User.current.logged? ? User.current.id : 0)])
-      # Project specific queries and global queries
-      visible << (@project.nil? ? ['project_id IS NULL'] : ['project_id = ?', @project.id])
-      @visible_queries = Query.where(visible.conditions)
+      # Find project queries or global queries depending on @project.nil?
+      @visible_queries = Query
+                         .visible(to: User.current)
+                         .where(project_id: @project)
                          .order('name ASC')
                          .select(:id, :name, :is_public, :project_id)
     end
@@ -182,16 +181,19 @@ module QueriesHelper
   def fix_field_array(query, field_names)
     return [] if field_names.nil?
 
-    # memoize to reduce overhead of WorkPackage.new
-    @fix_field_array_wp ||= WorkPackage.new
     available_keys = query.available_filters.map(&:name)
 
     field_names
-      .map { |name| converter.to_ar_name name, context: @fix_field_array_wp, refer_to_ids: true }
+      .map { |name| converter.to_ar_name name, context: converter_context, refer_to_ids: true }
       .map { |name| available_keys.find { |k| name =~ /#{k}(s|_id)?$/ } }
   end
 
   def converter
     API::Utilities::PropertyNameConverter
+  end
+
+  def converter_context
+    # memoize to reduce overhead of WorkPackage.new
+    @fix_field_array_wp ||= API::Utilities::PropertyNameConverterQueryContext.new
   end
 end

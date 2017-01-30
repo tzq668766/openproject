@@ -1,12 +1,12 @@
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2006-2017 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -167,6 +167,69 @@ describe 'layouts/base', type: :view do
 
       visit 'apple-touch-icon-120x120-precomposed.png'
       expect(page.status_code).to eq(200)
+    end
+  end
+
+  describe "inline custom styles" do
+    let(:a_token) { EnterpriseToken.new }
+
+    before do
+      allow(User).to receive(:current).and_return anonymous
+      allow(view).to receive(:current_user).and_return anonymous
+    end
+
+    context "EE is active and styles are present" do
+      let(:custom_style) { CustomStyle.new }
+
+      before do
+        allow(EnterpriseToken).to receive(:allows_to?).with(:define_custom_style).and_return(true)
+        allow(CustomStyle).to receive(:current).and_return(custom_style)
+
+        render
+      end
+
+      it "contains inline CSS block with those styles." do
+        expect(response).to render_template partial: 'custom_styles/_inline_css'
+      end
+    end
+
+    context "EE is active and styles are not present" do
+      before do
+        allow(EnterpriseToken).to receive(:current).and_return(a_token)
+        allow(a_token).to receive(:allows_to?).with(:define_custom_style).and_return(true)
+        allow(CustomStyle).to receive(:current).and_return(nil)
+
+        render
+      end
+
+      it "does not contain an inline CSS block for styles." do
+        expect(response).to_not render_template partial: 'custom_styles/_inline_css'
+      end
+    end
+
+    context "EE does not allow custom styles" do
+      before do
+        allow(EnterpriseToken).to receive(:current).and_return(a_token)
+        allow(a_token).to receive(:allows_to?).with(:define_custom_style).and_return(false)
+
+        render
+      end
+
+      it "does not contain an inline CSS block for styles." do
+        expect(response).to_not render_template partial: 'custom_styles/_inline_css'
+      end
+    end
+
+    context "no EE present" do
+      before do
+        allow(EnterpriseToken).to receive(:current).and_return(nil)
+
+        render
+      end
+
+      it "does not contain an inline CSS block for styles." do
+        expect(response).to_not render_template partial: 'custom_styles/_inline_css'
+      end
     end
   end
 end

@@ -1,12 +1,12 @@
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2006-2017 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ source 'https://rubygems.org'
 
 ruby '>= 2.2.5'
 
-gem 'rails', '~> 5.0.0'
+gem 'rails', '~> 5.0.1'
 gem 'actionpack-xml_parser', '~> 2.0.0'
 gem 'activemodel-serializers-xml', '~> 1.0.1'
 gem 'activerecord-session_store', '~> 1.0.0'
@@ -152,6 +152,8 @@ gem 'nokogiri', '~> 1.6.8'
 # at the cost of referencing carrierwave#master for now.
 gem 'fog-aws'
 gem 'carrierwave', git: 'https://github.com/carrierwaveuploader/carrierwave', branch: 'master'
+
+gem 'openproject-token', '~> 1.0.0'
 
 group :test do
   gem 'rack-test', '~> 0.6.3'

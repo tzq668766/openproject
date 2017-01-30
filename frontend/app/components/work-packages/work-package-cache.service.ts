@@ -35,6 +35,7 @@ import {WorkPackageNotificationService} from './../wp-edit/wp-notification.servi
 import {State} from "../../helpers/reactive-fassade";
 import IScope = angular.IScope;
 import {States} from "../states.service";
+import {Observable, Subject} from "rxjs";
 
 
 function getWorkPackageId(id: number|string): string {
@@ -43,7 +44,7 @@ function getWorkPackageId(id: number|string): string {
 
 export class WorkPackageCacheService {
 
-  private newWorkPackageCreatedSubject = new Rx.Subject<WorkPackageResource>();
+  private newWorkPackageCreatedSubject = new Subject<WorkPackageResource>();
 
   /*@ngInject*/
   constructor(private states: States,
@@ -54,7 +55,7 @@ export class WorkPackageCacheService {
   }
 
   newWorkPackageCreated(wp: WorkPackageResource) {
-    this.newWorkPackageCreatedSubject.onNext(wp);
+    this.newWorkPackageCreatedSubject.next(wp);
   }
 
   updateWorkPackage(wp: WorkPackageResource) {
@@ -72,12 +73,12 @@ export class WorkPackageCacheService {
       // Ensure the schema is loaded
       // so that no consumer needs to call schema#$load manually
       if (wpForPublish.schema.$loaded) {
-        return wpState.put(wpForPublish);
+        wpState.put(wpForPublish);
+      } else {
+        wpState.putFromPromise(wpForPublish.schema.$load().then(() => {
+          return wpForPublish;
+        }));
       }
-
-      wpState.putFromPromise(wpForPublish.schema.$load().then(() => {
-        return wpForPublish;
-      }));
     }
   }
 
@@ -107,7 +108,7 @@ export class WorkPackageCacheService {
       state.clear();
     }
 
-    // Several services involved in the creation of work packages 
+    // Several services involved in the creation of work packages
     // use this method to resolve the latest created work package,
     // so let them just subscribe.
     if (workPackageId.toString() === 'new') {
@@ -130,7 +131,7 @@ export class WorkPackageCacheService {
     return state;
   }
 
-  onNewWorkPackage(): Rx.Observable<WorkPackageResource> {
+  onNewWorkPackage(): Observable<WorkPackageResource> {
     return this.newWorkPackageCreatedSubject.asObservable();
   }
 

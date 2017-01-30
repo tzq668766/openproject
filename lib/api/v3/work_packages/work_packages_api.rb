@@ -1,12 +1,12 @@
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2006-2017 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -41,6 +41,7 @@ module API
           # Otherwise, the matcher for the :id also seems to match available_projects.
           # This is also true when the :id param is declared to be of type: Integer.
           mount ::API::V3::WorkPackages::AvailableProjectsOnCreateAPI
+          mount ::API::V3::WorkPackages::Schema::WorkPackageSchemasAPI
 
           get do
             authorize(:view_work_packages, global: true)
@@ -52,7 +53,7 @@ module API
           end
 
           params do
-            requires :id, desc: 'Work package id'
+            requires :id, desc: 'Work package id', type: Integer
           end
           route_param :id do
             helpers WorkPackagesSharedHelpers
@@ -115,7 +116,6 @@ module API
             mount ::API::V3::WorkPackages::WorkPackageRelationsAPI
           end
 
-          mount ::API::V3::WorkPackages::Schema::WorkPackageSchemasAPI
           mount ::API::V3::WorkPackages::CreateFormAPI
         end
       end

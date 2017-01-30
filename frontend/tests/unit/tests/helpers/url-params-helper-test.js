@@ -1,12 +1,12 @@
 //-- copyright
 // OpenProject is a project management system.
-// Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+// Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License version 3.
 //
 // OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-// Copyright (C) 2006-2013 Jean-Philippe Lang
+// Copyright (C) 2006-2017 Jean-Philippe Lang
 // Copyright (C) 2010-2013 the ChiliProject Team
 //
 // This program is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ describe('UrlParamsHelper', function() {
       };
       var filter2 = {
         name: 'created_at',
-        type: 'date_past',
+        type: 'datetime_past',
         operator: '<t-',
         textValue: '5'
       };
@@ -89,7 +89,7 @@ describe('UrlParamsHelper', function() {
 
     it('should encode query to params JSON', function() {
       var encodedJSON = UrlParamsHelper.encodeQueryJsonParams(query);
-      var expectedJSON = "{\"c\":[\"type\",\"status\",\"soße\"],\"s\":true,\"p\":2,\"g\":\"status\",\"t\":\"type:desc\",\"f\":[{\"n\":\"soße_id\",\"o\":\"%3D\",\"t\":\"list_model\",\"v\":[\"knoblauch\"]},{\"n\":\"created_at\",\"o\":\"%3Ct-\",\"t\":\"date_past\",\"v\":\"5\"}],\"pa\":1,\"pp\":10}";
+      var expectedJSON = "{\"c\":[\"type\",\"status\",\"soße\"],\"s\":true,\"p\":2,\"g\":\"status\",\"t\":\"type:desc\",\"f\":[{\"n\":\"soße_id\",\"o\":\"%3D\",\"t\":\"list_model\",\"v\":[\"knoblauch\"]},{\"n\":\"created_at\",\"o\":\"%3Ct-\",\"t\":\"datetime_past\",\"v\":[\"5\"]}],\"pa\":1,\"pp\":10}";
       expect(encodedJSON).to.eq(expectedJSON);
     });
   });
@@ -99,7 +99,7 @@ describe('UrlParamsHelper', function() {
     var queryId;
 
     beforeEach(function() {
-      params = "{\"c\":[\"type\",\"status\",\"soße\"],\"s\":true,\"p\":2,\"g\":\"status\",\"t\":\"type:desc\",\"f\":[{\"n\":\"soße_id\",\"o\":\"%3D\",\"t\":\"list_model\",\"v\":[\"knoblauch\"]},{\"n\":\"created_at\",\"o\":\"%3Ct-\",\"t\":\"date_past\",\"v\":\"5\"}]}";
+      params = "{\"c\":[\"type\",\"status\",\"soße\"],\"s\":true,\"p\":2,\"g\":\"status\",\"t\":\"type:desc\",\"f\":[{\"n\":\"soße_id\",\"o\":\"%3D\",\"t\":\"list_model\",\"v\":[\"knoblauch\"]},{\"n\":\"created_at\",\"o\":\"%3Ct-\",\"t\":\"datetime_past\",\"v\":[\"5\"]}]}";
       queryId = 2;
     });
 
@@ -120,7 +120,7 @@ describe('UrlParamsHelper', function() {
           values: ['knoblauch']
         },{
           name: 'created_at',
-          type: 'date_past',
+          type: 'datetime_past',
           operator: '<t-',
           values: ['5']
         }]

@@ -1,12 +1,12 @@
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2006-2017 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -83,6 +83,9 @@ module Redmine::MenuManager::TopMenu::HelpMenu
                   class: 'drop-down--help-headline',
                   title: l('top_menu.help_and_support')
     }
+    if EnterpriseToken.show_banners
+      result << static_link_item(:upsale, href_suffix: "?utm_source=ce-helpmenu")
+    end
     result << static_link_item(:user_guides)
     result << static_link_item(:faq)
     result << content_tag(:li) {
@@ -111,11 +114,11 @@ module Redmine::MenuManager::TopMenu::HelpMenu
     result << static_link_item(:api_docs)
   end
 
-  def static_link_item(key)
+  def static_link_item(key, options = {})
     link = OpenProject::Static::Links.links[key]
     label = I18n.t(link[:label])
     content_tag(:li) do
-      link_to label, link[:href], title: label
+      link_to label, "#{link[:href]}#{options[:href_suffix]}", title: label
     end
   end
 end

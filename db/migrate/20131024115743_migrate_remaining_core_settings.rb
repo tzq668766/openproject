@@ -1,13 +1,13 @@
 #-- encoding: UTF-8
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2006-2017 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -27,8 +27,6 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
-require_relative 'migration_utils/ar_parameter_patch'
-
 class MigrateRemainingCoreSettings < ActiveRecord::Migration[4.2]
   REPLACED = {
     'tracker' => 'type',
@@ -38,9 +36,6 @@ class MigrateRemainingCoreSettings < ActiveRecord::Migration[4.2]
     'updated_on' => 'updated_at'
   }
   def self.up
-
-    ArParametersPatch.load
-
     # Delete old plugin settings no longer needed
     ActiveRecord::Base.connection.execute <<-SQL
         DELETE FROM #{settings_table}
@@ -56,9 +51,6 @@ class MigrateRemainingCoreSettings < ActiveRecord::Migration[4.2]
   end
 
   def self.down
-
-    ArParametersPatch.load
-
     # the above delete part is inherently not reversable
     # Rename Type to Tracker
     Setting['work_package_list_default_columns'] = replace(Setting['work_package_list_default_columns'], REPLACED.invert)

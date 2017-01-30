@@ -1,13 +1,13 @@
 #-- encoding: UTF-8
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2006-2017 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -40,25 +40,27 @@ class Queries::BaseFilter
   self.filter_params = [:operator, :values]
 
   self.operators = {
-    label_equals:               '=',
-    label_not_equals:           '!',
-    label_open_work_packages:   'o',
-    label_closed_work_packages: 'c',
-    label_none:                 '!*',
-    label_all:                  '*',
-    label_greater_or_equal:     '>=',
-    label_less_or_equal:        '<=',
-    label_in_less_than:         '<t+',
-    label_in_more_than:         '>t+',
-    label_in:                   't+',
-    label_today:                't',
-    label_this_week:            'w',
-    label_less_than_ago:        '>t-',
-    label_more_than_ago:        '<t-',
-    label_ago:                  't-',
-    label_contains:             '~',
-    label_not_contains:         '!~'
-  }.invert
+    '=': 'label_equals',
+    '!': 'label_not_equals',
+    'o': 'label_open_work_packages',
+    'c': 'label_closed_work_packages',
+    '!*': 'label_none',
+    '*': 'label_all',
+    '>=': 'label_greater_or_equal',
+    '<=': 'label_less_or_equal',
+    '<t+': 'label_in_less_than',
+    '>t+': 'label_in_more_than',
+    't+': 'label_in',
+    't': 'label_today',
+    'w': 'label_this_week',
+    '>t-': 'label_less_than_ago',
+    '<t-': 'label_more_than_ago',
+    't-': 'label_ago',
+    '~': 'label_contains',
+    '!~': 'label_not_contains',
+    '=d': 'label_on',
+    '<>d': 'label_between'
+  }
 
   self.operators_not_requiring_values = %w(o c !* * t w)
 
@@ -67,11 +69,11 @@ class Queries::BaseFilter
     list_status:      ['o', '=', '!', 'c', '*'],
     list_optional:    ['=', '!', '!*', '*'],
     list_subprojects: ['*', '!*', '='],
-    date:             ['<t+', '>t+', 't+', 't', 'w', '>t-', '<t-', 't-'],
-    date_past:        ['>t-', '<t-', 't-', 't', 'w'],
+    date:             ['<t+', '>t+', 't+', 't', 'w', '>t-', '<t-', 't-', '=d', '<>d'],
+    datetime_past:    ['>t-', '<t-', 't-', 't', 'w'],
     string:           ['=', '~', '!', '!~'],
     text:             ['~', '!~'],
-    integer:          ['=', '>=', '<=', '!*', '*']
+    integer:          ['=', '!', '>=', '<=', '!*', '*']
   }
 
   attr_accessor :context,
@@ -173,10 +175,20 @@ class Queries::BaseFilter
     return true if self.class.operators_not_requiring_values.include?(operator)
 
     case type
-    when :integer, :date, :date_past
-      validate_values_all_integer
+    when :integer, :date, :datetime_past
+      if operator == '=d' || operator == '<>d'
+        validate_values_all_date
+      else
+        validate_values_all_integer
+      end
     when :list, :list_optional
       validate_values_in_allowed_values_list
+    end
+  end
+
+  def validate_values_all_date
+    unless values.all? { |value| value != 'undefined' ? date?(value) : true }
+      errors.add(:values, I18n.t('activerecord.errors.messages.not_a_date'))
     end
   end
 
@@ -197,6 +209,12 @@ class Queries::BaseFilter
 
   def integer?(str)
     true if Integer(str)
+  rescue
+    false
+  end
+
+  def date?(str)
+    true if Date.parse(str)
   rescue
     false
   end

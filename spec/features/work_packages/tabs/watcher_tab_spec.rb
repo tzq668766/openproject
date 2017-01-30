@@ -49,7 +49,7 @@ describe 'Watcher tab', js: true, selenium: true do
   end
 
   shared_examples 'watchers tab' do
-    include_context 'typeahead helpers'
+    include_context 'ui-autocomplete helpers'
 
     before do
       login_as(user)
@@ -59,8 +59,8 @@ describe 'Watcher tab', js: true, selenium: true do
 
     it 'modifying the watcher list modifies the watch button' do
       # Add user as watcher
-      typeahead = find('.wp-watcher--autocomplete')
-      select_typeahead(typeahead, query: user.firstname, select_text: user.name)
+      autocomplete = find('.wp-watcher--autocomplete')
+      select_autocomplete(autocomplete, query: user.firstname, select_text: user.name)
 
       # Expect the addition of the user to toggle WP watch button
       expect(page).to have_selector('.work-package--watcher-name', count: 1, text: user.name)
@@ -73,6 +73,23 @@ describe 'Watcher tab', js: true, selenium: true do
       # Expect the removal of the user to toggle WP watch button
       expect(page).to have_no_selector('.work-package--watcher-name')
       expect_button_is_not_watching
+    end
+
+    context 'with a user with arbitrary characters' do
+      let!(:html_user) {
+        FactoryGirl.create :user,
+                           firstname: '<em>foo</em>',
+                           member_in_project: project,
+                           member_through_role: role
+      }
+
+      it 'escapes the user name' do
+        autocomplete = find('.wp-watcher--autocomplete')
+        target_dropdown = search_autocomplete(autocomplete, query: 'foo')
+
+        expect(target_dropdown).to have_selector(".ui-menu-item", text: html_user.firstname)
+        expect(target_dropdown).to have_no_selector(".ui-menu-item em")
+      end
     end
 
     context 'with all permissions' do

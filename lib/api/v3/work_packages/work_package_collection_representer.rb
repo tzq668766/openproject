@@ -1,13 +1,13 @@
 #-- encoding: UTF-8
 #-- copyright
 # OpenProject is a project management system.
-# Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+# Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
 #
 # OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2006-2017 Jean-Philippe Lang
 # Copyright (C) 2010-2013 the ChiliProject Team
 #
 # This program is free software; you can redistribute it and/or
@@ -46,10 +46,12 @@ module API
                        total_sums:,
                        page: nil,
                        per_page: nil,
+                       embed_schemas: false,
                        current_user:)
           @project = project
           @groups = groups
           @total_sums = total_sums
+          @embed_schemas = embed_schemas
 
           super(models,
                 self_link,
@@ -94,6 +96,12 @@ module API
           } if current_user_allowed_to_add_work_packages?
         end
 
+        link :schemas do
+          {
+            href: schemas_path
+          } if represented.any?
+        end
+
         collection :elements,
                    getter: -> (*) {
                      generated_classes = ::Hash.new do |hash, work_package|
@@ -111,6 +119,12 @@ module API
                    },
                    exec_context: :decorator,
                    embedded: true
+
+        property :schemas,
+                 exec_context: :decorator,
+                 if: ->(*) { embed_schemas && represented.any? },
+                 embedded: true,
+                 render_nil: false
 
         property :groups,
                  exec_context: :decorator,
@@ -131,6 +145,30 @@ module API
           current_user.allowed_to?(:add_work_packages, project, global: project.nil?)
         end
 
+        def schemas
+          schemas = schema_pairs.map do |project, type|
+            Schema::TypedWorkPackageSchema.new(project: project, type: type)
+          end
+
+          Schema::WorkPackageSchemaCollectionRepresenter.new(schemas,
+                                                             schemas_path,
+                                                             current_user: current_user)
+        end
+
+        def schemas_path
+          ids = schema_pairs.map do |project, type|
+            [project.id, type.id]
+          end
+
+          api_v3_paths.work_package_schemas(*ids)
+        end
+
+        def schema_pairs
+          represented
+            .map { |work_package| [work_package.project, work_package.type] }
+            .uniq
+        end
+
         def add_eager_loading(scope, current_user)
           scope
             .includes(element_decorator.to_eager_load)
@@ -139,7 +177,7 @@ module API
         end
 
         def paged_models(models)
-          models.page(@page).per_page(@per_page).pluck(:id).uniq
+          models.page(@page).per_page(@per_page).pluck(:id)
         end
 
         def full_work_packages(ids_in_order)
@@ -183,9 +221,14 @@ module API
           cvs
         end
 
+        def _type
+          'WorkPackageCollection'
+        end
+
         attr_reader :project,
                     :groups,
-                    :total_sums
+                    :total_sums,
+                    :embed_schemas
       end
     end
   end

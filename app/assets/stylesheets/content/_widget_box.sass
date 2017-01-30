@@ -1,12 +1,12 @@
 //-- copyright
 // OpenProject is a project management system.
-// Copyright (C) 2012-2015 the OpenProject Foundation (OPF)
+// Copyright (C) 2012-2017 the OpenProject Foundation (OPF)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License version 3.
 //
 // OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
-// Copyright (C) 2006-2013 Jean-Philippe Lang
+// Copyright (C) 2006-2017 Jean-Philippe Lang
 // Copyright (C) 2010-2013 the ChiliProject Team
 //
 // This program is free software; you can redistribute it and/or
@@ -49,7 +49,8 @@ $widget-box--enumeration-width: 20px
       flex-direction: column
 
     .widget-box--enumeration,
-    .widget-box--arrow-links
+    .widget-box--arrow-links,
+    .widget-box--feature-list
       flex-grow: 2
 
   .icon-context:before
@@ -124,6 +125,28 @@ $widget-box--enumeration-width: 20px
           margin-bottom: 10px
           //necessary for correct alignment even with long texts
           width: calc(100% - #{$widget-box--enumeration-width})
+
+    .widget-box--feature-list
+      list-style: none
+      margin: 0.5rem 0 1rem 0
+
+      &:last-child
+        margin-bottom: 0
+
+      li:before
+        @include icon-common
+        @extend .icon-notice
+        @extend .icon-notice:before
+        display: inline-block
+        font-size: 0.6rem
+        color: $alternative-color
+        width: $widget-box--enumeration-width
+
+
+    .widget-box--teaser-image
+      height: 100px
+      margin-left: auto
+      margin-right: auto
 
 @include breakpoint(680px down)
   .widget-boxes
