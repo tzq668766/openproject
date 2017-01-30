@@ -95,6 +95,12 @@ GIT
       activesupport (>= 3.0)
       rspec-mocks (>= 2.99, < 4.0)
 
+PATH
+  remote: ./plugin/openproject-themes-db
+  specs:
+    openproject-themes-db (6.1.0)
+      rails (~> 5.0.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -650,6 +656,7 @@ DEPENDENCIES
   nokogiri (~> 1.6.8)
   oj (~> 2.17.4)
   omniauth!
+  openproject-themes-db!
   openproject-token (~> 1.0.0)
   openproject-translations!
   parallel_tests (~> 2.4.1)
