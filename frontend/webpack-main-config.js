@@ -98,7 +98,6 @@ function getWebpackMainConfig() {
     context: path.resolve(__dirname, 'app'),
 
     entry: _.merge({
-      'global': './global',
       'core-app': './openproject-app'
     }, pluginEntries),
 
@@ -126,10 +125,6 @@ function getWebpackMainConfig() {
 
         'at.js': path.resolve(__dirname, 'vendor', 'at.js'),
         'select2': path.resolve(__dirname, 'vendor', 'select2'),
-        'angular-truncate': 'angular-truncate/src/truncate',
-        'angular-context-menu': 'angular-context-menu/dist/angular-context-menu.js',
-        'mousetrap': 'mousetrap/mousetrap.js',
-        'ngFileUpload': 'ng-file-upload/dist/ng-file-upload.min.js',
         'lodash': path.resolve(node_root, 'lodash', 'dist', 'lodash.min.js'),
         // prevents using crossvent from dist and by that
         // reenables debugging in the browser console.
@@ -147,6 +142,11 @@ function getWebpackMainConfig() {
       // errors are detected (this includes TS warnings)
       // It is ONLY executed when `ENV[CI]` is set or `--bail` is used.
       TypeScriptDiscruptorPlugin,
+
+      new webpack.DllReferencePlugin({
+          context: path.resolve(__dirname),
+          manifest: require('./dist/vendors-dll-manifest.json')
+      }),
 
       // Extract CSS into its own bundle
       new ExtractTextPlugin({
