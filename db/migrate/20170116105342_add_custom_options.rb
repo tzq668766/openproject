@@ -41,6 +41,7 @@ class AddCustomOptions < ActiveRecord::Migration[5.0]
     create_table table_name do |t|
       t.integer :custom_field_id
       t.integer :position
+      t.boolean :default_value
       t.text :value
     end
 

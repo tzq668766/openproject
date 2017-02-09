@@ -108,11 +108,14 @@ module Redmine
         end
 
         def custom_field_values
-          @custom_field_values ||= available_custom_fields.map { |custom_field|
-            existing_cv = custom_values.detect { |v| v.custom_field == custom_field }
-            existing_cv || custom_values.build(customized: self,
-                                               custom_field: custom_field,
-                                               value: nil)
+          @custom_field_values ||= available_custom_fields.flat_map { |custom_field|
+            existing_cvs = custom_values.select { |v| v.custom_field_id == custom_field.id }
+
+            if existing_cvs.empty?
+              existing_cvs.push custom_values.build(customized: self, custom_field: custom_field, value: nil)
+            end
+
+            existing_cvs
           }
         end
 
