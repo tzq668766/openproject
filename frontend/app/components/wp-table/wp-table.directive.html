@@ -27,7 +27,7 @@
                           query="query"
                           ng-class="column.name == 'id' && '-short' ">
           </th>
-          <th class="wp-table--details-column -short">
+          <th class="wp-table--details-column -short hide-when-print">
             <div class="generic-table--sort-header-outer">
               <accessible-by-keyboard
                           execute="openColumnsModal()"
@@ -158,7 +158,7 @@
               </a>
             </span>
           </td>
-          <td ng-if="row.object.isNew" class="cancel-inline-create wp-table--details-column">
+          <td ng-if="row.object.isNew" class="cancel-inline-create wp-table--details-column hide-when-print">
             <span>
               <accessible-by-keyboard
                           execute="cancelInlineWorkPackage($index, row)"
@@ -206,7 +206,7 @@
       </tbody>
       <tfoot>
         <!-- Inline create button -->
-        <tr class="wp-inline-create-button-row">
+        <tr class="wp-inline-create-button-row hide-when-print">
           <!--  Add 2 to the colspan attr because of the id and the checkbox columns  -->
           <td colspan="{{ numTableColumns }}">
             <wp-inline-create-button
